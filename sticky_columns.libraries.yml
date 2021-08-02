@@ -1,0 +1,6 @@
+sticky_columns:
+  js:
+    js/sticky-columns.js: {}
+  css:
+    component:
+      css/sticky-columns.css: {}

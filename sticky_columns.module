@@ -1,0 +1,92 @@
+<?php
+
+use Drupal\Component\Utility\Html;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Render\Element;
+
+/**
+ * Implements hook_form_FORM_ID_alter()
+ */
+function sticky_columns_form_views_ui_edit_display_form_alter(&$form, FormStateInterface $form_state)
+{
+  $view = $form_state->get('view');
+  $display_id = $form_state->get('display_id');
+  $executable = $view->getExecutable();
+  if ($form_state->get('section') !== 'style_options') {
+    return;
+  }
+  if (!$executable->setDisplay($display_id)) {
+    $form['markup'] = ['#markup' => $this->t('Invalid display id @display', ['@display' => $display_id])];
+    return;
+  }
+
+  $style = $executable->display_handler->getPlugin('style');
+  if (!isset($style->options['columns'])) {
+    // Not a table style.
+    return;
+  }
+
+  $labels = $executable->display_handler->getFieldLabels();
+  $fields = $executable->display_handler->getHandlers('field');
+  $columns = array('_none' => t('No'));
+  foreach ($fields as $field_name => $field) {
+    if (!$field->options['exclude']) {
+      $columns[$field_name] = !empty($labels[$field_name]) ? $labels[$field_name] : $field_name;
+    }
+  }
+
+  $form['options']['style_options']['sticky_columns'] = [
+    '#type' => 'details',
+    '#title' => t('Sticky Columns Settings'),
+  ];
+  $form['options']['style_options']['sticky_columns']['columns'] = [
+    '#title' => t('Columns'),
+    '#type' => 'checkboxes',
+    '#default_value' => !empty($style->options['sticky_columns']['columns']) ? $style->options['sticky_columns']['columns'] : [],
+    '#options' => $columns,
+  ];
+}
+
+/**
+ * Preprocess the primary theme implementation for a view.
+ */
+function sticky_columns_preprocess(&$vars, $hook)
+{
+  if (empty(preg_match("/.*_?table_?.*/", $hook))) {
+    return;
+  }
+  $view = !empty($vars['view']) ? $vars['view'] : NULL;
+  if (!$view) {
+    return;
+  }
+  $style = $view->display_handler->getPlugin('style');
+  if (!isset($style->options['columns'])) {
+    return;
+  }
+
+  $sticky_columns = !empty($style->options['sticky_columns']['columns']) ? $style->options['sticky_columns']['columns'] : [];
+  $sticky_columns_enable = FALSE;
+  foreach ($vars['header'] as $field => &$header) {
+    if (!empty($sticky_columns[$field])) {
+      $header['attributes']->addClass('sticky-column');
+      $sticky_columns_enable = TRUE;
+    }
+  }
+  // Body cells classes.
+  foreach ($vars['rows'] as $index => &$rows) {
+    if (!empty($rows['columns'] )) {
+      foreach ($rows['columns'] as $field => &$column) {
+        if (!empty($sticky_columns[$field])) {
+          $column['attributes']->addClass('sticky-column');
+        }
+      }
+    }
+  }
+  // Main script and styles.
+  if ($sticky_columns_enable) {
+    $vars['classes_array'][] = 'sticky-columns';
+    $vars['#attached']['library'][] = "sticky_columns/sticky_columns";
+    $vars['attributes']['class'] = array_merge(!empty($vars['attributes']['class']) ? $vars['attributes']['class'] : [], array('sticky-columns'));
+  }
+}
+

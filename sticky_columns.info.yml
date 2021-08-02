@@ -1,0 +1,7 @@
+name: Sticky Columns
+description: Allows to use sticky table columns in Views table.
+type: module
+core_version_requirement: ^9
+package: DNC - Views
+dependencies:
+  - drupal:views
