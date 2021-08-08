@@ -2,11 +2,14 @@
     "name" : "daoanhdoan/sticky_columns",
     "description": "Sticky Columns - Allows to use sticky table columns in Views table.",
     "type" : "drupal-custom-module",
-    "license": "GPL-2.0",
+    "license": "GPL-2.0+",
     "extra": {
         "installer-name": "sticky_columns"
     },
     "require": {
-        "drupal/views": "*"
+        "drupal/views": "*",
+        "drupal/filter": "*",
+        "drupal/user": "*",
+        "drupal/system": "*"
     }
 }
